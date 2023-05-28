@@ -1,0 +1,51 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "influxdb" do |influxdb|
+    influxdb.vm.box = "ubuntu/jammy64"
+    influxdb.vm.network "private_network", bridge: "Realtek 8811CU Wireless LAN 802.11ac USB NIC", ip: "192.168.33.200" 
+    influxdb.vm.network "forwarded_port", guest: 8086, host: 8086
+    influxdb.vm.synced_folder "C:/Users/jessi/GRAFANA/", "/home/vagrant/vagrant", type: "virtualbox"
+    influxdb.vm.provider "virtualbox" do |vb|
+        vb.memory = 1024
+        vb.cpus = 1
+        vb.name = "INFLUXDB"
+    end
+    $script=<<-SCRIPT
+    apt update -y && apt upgrade -y
+    wget -q https://repos.influxdata.com/influxdb.key
+    echo '23a1c8836f0afc5ed24e0486339d7cc8f6790b83886c4c96995b88a061c5bb5d influxdb.key' | sha256sum -c && cat influxdb.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdb.gpg > /dev/null
+    echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdb.gpg] https://repos.influxdata.com/debian stable main' | sudo tee /etc/apt/sources.list.d/influxdata.list
+    sudo apt-get update -y && sudo apt-get install influxdb2 -y
+    systemctl start influxdb && systemctl enable influxdb && systemctl status influxdb
+    wget -q https://repos.influxdata.com/influxdb.key
+    echo '23a1c8836f0afc5ed24e0486339d7cc8f6790b83886c4c96995b88a061c5bb5d influxdb.key' | sha256sum -c && cat influxdb.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdb.gpg > /dev/null
+    echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdb.gpg] https://repos.influxdata.com/debian stable main' | sudo tee /etc/apt/sources.list.d/influxdata.list
+    sudo apt-get update -y && sudo apt-get install telegraf -y
+    systemctl start telegraf && systemctl enable telegraf && systemctl status telegraf
+    SCRIPT
+    influxdb.vm.provision "shell", inline:$script
+  end
+end
+Vagrant.configure("2") do |config|
+config.vm.define "ubuntu2" do |ubuntu2|
+  ubuntu2.vm.box = "ubuntu/bionic64"
+  ubuntu2.vm.network "public_network", bridge: "Realtek 8811CU Wireless LAN 802.11ac USB NIC", ip: "192.168.0.202"
+  ubuntu2.vm.network "forwarded_port", guest: 3000, host: 3005
+  ubuntu2.vm.boot_timeout = 1200
+  ubuntu2.vm.synced_folder "C:/Users/jessi/GRAFANA/", "/vagrant", type: "virtualbox"
+  ubuntu2.vm.provider "virtualbox" do |vb|
+      vb.memory = 1024
+      vb.cpus = 2
+      vb.name = "ubuntu2"
+  end
+  $script=<<-SCRIPT
+  sudo apt-get install -y apt-transport-https
+  sudo apt-get install -y software-properties-common wget
+  wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+  echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+  sudo apt-get update -y && sudo apt-get install grafana -y
+  sudo systemctl daemon-reload && sudo systemctl start grafana-server && sudo systemctl status grafana-server
+  sudo systemctl enable grafana-server.service
+  SCRIPT
+  ubuntu2.vm.provision "shell", inline:$script
+end
+end

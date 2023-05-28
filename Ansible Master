@@ -1,0 +1,19 @@
+Vagrant.configure("2") do |master|
+  master.vm.define "master" do |master|
+  master.vm.box = "ubuntu/jammy64"
+  master.vm.hostname = "master" 
+  master.vm.network "public_network", bridge: "", ip: "192.168.0.42"
+  master.vm.boot_timeout = 1200
+  master.vm.synced_folder "C:/Users/jessi/ANSIBLE", "/home/ansible/playbook/", owner: "ansible", group: "ansible"
+  master.vm.provision "shell", inline: "sudo apt update -y && sudo apt dist-upgrade -y"
+  master.vm.provision "shell", inline: "sudo apt-get install python-is-python3 -y"
+  master.vm.provision "shell", inline: "sudo apt-get install python3-pip -y"
+  master.vm.provision "shell", inline: "sudo python3 -m pip install --upgrade pip"
+  master.vm.provision "shell", inline: "sudo pip install ansible==2.9.10"
+  master.vm.provider "virtualbox" do |master|
+     master.memory = 1024
+     master.cpus = 2
+     master.name = "master"
+   end
+  end
+end

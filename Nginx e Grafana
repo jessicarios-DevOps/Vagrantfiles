@@ -1,0 +1,36 @@
+Vagrant.configure("2") do |config|
+config.vm.define " server1" do |server1|
+  server1.vm.box = "ubuntu/bionic64"
+  server1.vm.network "public_network", bridge: "Realtek 8811CU Wireless LAN 802.11ac USBNIC", ip: "192.168.0.200"
+  server1.vm.network "forwarded_port", guest:80, host: 3005, host_ip: "127.0.0.1"
+  server1.vm.provision "shell", inline: "sudo apt update -y"
+  server1.vm.provision "shell", inline: "sudo apt-get install nginx -y"
+  server1.vm.provision "shell", inline: "sudo service nginx start"
+  server1.vm.provider "virtualbox" do |vb|
+      vb.gui = true
+      vb.memory = "1024"
+      vb.cpus = "2"
+end
+end
+
+config.vm.define "server2" do |debian|
+  debian.vm.box = "debian/buster64"
+  debian.vm.network "public_network", bridge: "Realtek 8811CU Wireless LAN 802.11ac USBNIC", ip: "192.168.0.201"
+  debian.vm.network "forwarded_port", guest:3000, host: 8989, host_ip: "127.0.0.1"
+  debian.vm.provision "shell", inline: "sudo apt update -y"
+  debian.vm.provision "shell", inline: "sudo apt install apt-transport-https -y"
+  debian.vm.provision "shell", inline: "sudo apt install software-properties-common wget -y"
+  debian.vm.provision "shell", inline: "sudo wget -q -O /usr/share/keyrings/grafana.key https://packages.grafana.com/gpg.key"
+  debian.vm.provision "shell", inline: 'echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list'
+  debian.vm.provision "shell", inline: "sudo apt update -y"
+  debian.vm.provision "shell", inline: "sudo apt install grafana -y"
+  debian.vm.provision "shell", inline: "sudo systemctl daemon-reload"
+  debian.vm.provision "shell", inline: "sudo systemctl enable grafana-server.service"
+  debian.vm.provision "shell", inline: "sudo systemctl start grafana-server"
+  debian.vm.provider "virtualbox" do |vb|
+      vb.gui = true
+      vb.memory = "1024"
+      vb.cpus = "2"
+end
+end
+end
